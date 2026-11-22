@@ -17,6 +17,7 @@
       <button class="nav-btn" data-nav="home">الرئيسية</button>
       <button class="nav-btn auth-only" data-nav="mining">التعدين ⛏️</button>
       <button class="nav-btn auth-only" data-nav="tasks">المهام</button>
+      <button class="nav-btn auth-only" data-nav="cashback">الكاش باك 💸</button>
       <button class="nav-btn auth-only" data-nav="referral">ادعُ صحابك</button>
       <button class="nav-btn auth-only" data-nav="wallet">محفظتي</button>
       <button class="nav-btn auth-only admin-only" data-nav="admin">لوحة التحكم</button>
@@ -44,6 +45,7 @@
         <div class="point"><span class="point-icon">⛏️</span><strong>تعدين كل ساعة</strong><span>جلسة تعدين 60 دقيقة = 100 نقطة = 0.10 دولار</span></div>
         <div class="point"><span class="point-icon">🎁</span><strong>مكافأة يومية</strong><span>ادخل كل يوم وخد 50 نقطة هدية</span></div>
         <div class="point"><span class="point-icon">👍</span><strong>مهام بسيطة</strong><span>لايك ومتابعة ومشاركة — من 10 لـ 50 نقطة للمهمة</span></div>
+        <div class="point"><span class="point-icon">💸</span><strong>كاش باك</strong><span>اشتري من جوميا وأمازون ونون وخد 5% من مشترياتك نقاط</span></div>
         <div class="point"><span class="point-icon">👥</span><strong>ادعُ صحابك</strong><span>100 نقطة عن كل صاحب يسجّل بكودك</span></div>
       </div>
     </div>
@@ -158,6 +160,38 @@
     <p class="form-msg" id="tasksMsg" role="alert"></p>
   </section>
 
+  <!-- ============ الكاش باك ============ -->
+  <section class="view" id="view-cashback" hidden>
+    <h2>الكاش باك 💸</h2>
+    <p class="muted">اشتري من المتجر عبر زر "تسوّق الآن"، وبعد الشراء ابعت رقم الطلب (أو لينك الإثبات) في النموذج تحت — وهتاخد <strong>5% من قيمة مشترياتك نقاط</strong> بعد موافقة الأدمن. مثال: مشتريات <strong>20 دولار × 5% = 1 دولار = 1000 نقطة</strong>.</p>
+    <div id="cashbackOffers" class="tasks-grid"></div>
+    <p class="empty" id="cashbackOffersEmpty" hidden>مفيش عروض كاش باك نشطة دلوقتي — تابعنا قريب.</p>
+    <p class="form-msg" id="cashbackMsg" role="alert"></p>
+
+    <div class="card">
+      <h3>اطلب الكاش باك 📝</h3>
+      <p class="muted small">اختار المتجر اللي اشتريت منه، واكتب قيمة مشترياتك بالدولار، وحط رقم الطلب أو لينك الإثبات.</p>
+      <form id="cashbackClaimForm">
+        <label>المتجر
+          <select id="cbOffer" required></select>
+        </label>
+        <label>قيمة مشترياتك (بالدولار $)
+          <input type="number" id="cbAmount" min="0.01" step="0.01" required placeholder="مثال: 20">
+        </label>
+        <label>الإثبات — رقم الطلب أو لينك الإثبات
+          <input type="text" id="cbProof" required placeholder="مثال: رقم الطلب 123456789">
+        </label>
+        <p class="muted small" id="cbPreview"></p>
+        <button class="btn btn-primary btn-block" type="submit">ابعت طلب الكاش باك</button>
+      </form>
+      <p class="form-msg" id="cbClaimMsg" role="alert"></p>
+    </div>
+
+    <h3 class="section-title">طلباتي 📋</h3>
+    <div id="myCashbackClaims" class="queue"></div>
+    <p class="empty" id="myCashbackClaimsEmpty" hidden>لسه مبعتش أي طلب كاش باك — اشتري من متجر من فوق واطلب الكاش باك بتاعك.</p>
+  </section>
+
   <!-- ============ الإحالة ============ -->
   <section class="view" id="view-referral" hidden>
     <h2>ادعُ صحابك 👥</h2>
@@ -245,6 +279,7 @@
       <div class="stat"><strong id="statWdPending">—</strong><span>سحب قيد المراجعة</span></div>
       <div class="stat"><strong id="statMining">—</strong><span>تعدين نشط دلوقتي</span></div>
       <div class="stat"><strong id="statTasksPending">—</strong><span>تسليم قيد المراجعة</span></div>
+      <div class="stat"><strong id="statCashbackPending">—</strong><span>كاش باك قيد المراجعة</span></div>
     </div>
 
     <h3 class="section-title">طلبات السحب ⏳</h3>
@@ -254,6 +289,37 @@
     <h3 class="section-title">تسليمات المهام ⏳</h3>
     <div id="adminCompletions" class="queue"></div>
     <p class="empty" id="adminCompletionsEmpty" hidden>مفيش تسليمات قيد المراجعة.</p>
+
+    <h3 class="section-title">مطالبات الكاش باك ⏳</h3>
+    <p class="muted small">راجع الإثبات (رقم الطلب) قبل الموافقة — الموافقة بتنزّل النقاط في رصيد المستخدم فورًا.</p>
+    <div id="adminCashbackClaims" class="queue"></div>
+    <p class="empty" id="adminCashbackClaimsEmpty" hidden>مفيش مطالبات كاش باك قيد المراجعة.</p>
+
+    <h3 class="section-title">إدارة عروض الكاش باك 💸</h3>
+    <div class="card">
+      <form id="cbOfferForm">
+        <input type="hidden" id="cbOfferEditId">
+        <label>اسم المتجر
+          <input type="text" id="cbStoreName" required placeholder="مثال: جوميا">
+        </label>
+        <label>نسبة الكاش باك (%)
+          <input type="number" id="cbPercent" min="0.01" max="100" step="0.01" required placeholder="مثال: 5">
+        </label>
+        <label>رابط المتجر
+          <input type="text" id="cbStoreUrl" required placeholder="https://…" dir="ltr">
+        </label>
+        <label>وصف العرض (اختياري)
+          <textarea id="cbOfferDesc" rows="2" placeholder="وصف مختصر للعرض"></textarea>
+        </label>
+        <div class="form-row">
+          <button class="btn btn-primary" type="submit" id="cbOfferSaveBtn">أضف العرض</button>
+          <button class="btn btn-ghost" type="button" id="cbOfferCancelEdit" hidden>إلغاء التعديل</button>
+        </div>
+      </form>
+      <p class="form-msg" id="cbOfferMsg" role="alert"></p>
+      <p class="muted small">⚠️ روابط المتاجر الحالية روابط عادية (placeholder) — سجّل في برامج الأفيلييت (جوميا أفيلييت / أمازون أسوشيتس / نون أفيلييت) وبدّلها بروابط الأفيلييت بتاعتك من هنا، عشان العمولة الحقيقية تتتبع وتتدفع لك.</p>
+    </div>
+    <div id="adminCashbackOffersList" class="tasks-grid"></div>
 
     <h3 class="section-title">إدارة المهام 👍</h3>
     <div class="card">
@@ -308,6 +374,9 @@
         </label>
         <label>عدد النقاط = 1 دولار (سعر التحويل)
           <input type="number" id="setPointsPerUsd" min="1" step="1" placeholder="1000">
+        </label>
+        <label>نسبة الكاش باك الافتراضية للعروض الجديدة (%)
+          <input type="number" id="setCashbackPercent" min="0.01" max="100" step="0.01" placeholder="5">
         </label>
         <button class="btn btn-primary" type="submit">احفظ الإعدادات</button>
       </form>

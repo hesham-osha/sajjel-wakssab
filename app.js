@@ -30,6 +30,10 @@ const state = {
   adminStats: null,
   adminUsers: [],
   adminTasks: [],
+  cashbackOffers: [],
+  myCashbackClaims: [],
+  adminCashbackOffers: [],
+  adminCashbackClaims: [],
 };
 
 let countdownTimer = null;
@@ -68,7 +72,8 @@ const TX_LABEL = {
   withdrawal_hold: "حجز نقاط سحب",
   withdrawal_paid: "سحب اتدفع",
   withdrawal_refund: "استرجاع سحب مرفوض",
-  adjustment: "تعديل من الأدمن"
+  adjustment: "تعديل من الأدمن",
+  cashback: "كاش باك 💸"
 };
 
 function toast(msg) {
@@ -133,7 +138,7 @@ function isDeviceError(e) {
 }
 
 // ---------- التنقل بين الصفحات ----------
-const VIEWS = ["home", "auth", "mining", "tasks", "referral", "wallet", "admin"];
+const VIEWS = ["home", "auth", "mining", "tasks", "cashback", "referral", "wallet", "admin"];
 function showView(name) {
   for (const v of VIEWS) {
     const el = $("view-" + v);
@@ -145,6 +150,7 @@ function showView(name) {
   window.scrollTo({ top: 0 });
   if (name === "mining") loadMining();
   if (name === "tasks") loadTasks();
+  if (name === "cashback") loadCashback();
   if (name === "referral") loadReferral();
   if (name === "wallet") loadWallet();
   if (name === "admin") loadAdmin();
@@ -155,7 +161,7 @@ document.addEventListener("click", (e) => {
   if (nav) {
     e.preventDefault();
     const target = nav.dataset.nav;
-    if ((target === "mining" || target === "tasks" || target === "referral" || target === "wallet" || target === "admin") && !state.user) {
+    if ((target === "mining" || target === "tasks" || target === "cashback" || target === "referral" || target === "wallet" || target === "admin") && !state.user) {
       showView("auth");
       setMsg($("authMsg"), "سجّل دخولك الأول عشان توصل للصفحة دي.", "error");
       return;
@@ -487,6 +493,123 @@ function renderTasks() {
   });
 }
 
+// ---------- الكاش باك ----------
+function cashbackPointsPreview(amount, percent) {
+  const rate = (state.wallet && state.wallet.points_per_usd) || 1000;
+  return Math.floor(Number(amount || 0) * (Number(percent || 0) / 100) * rate);
+}
+
+function updateCbPreview() {
+  const sel = $("cbOffer");
+  const amount = Number($("cbAmount").value || 0);
+  const opt = sel && sel.selectedOptions && sel.selectedOptions[0];
+  const percent = opt ? Number(opt.dataset.percent || 0) : 0;
+  const rate = (state.wallet && state.wallet.points_per_usd) || 1000;
+  $("cbPreview").textContent = (amount > 0 && percent > 0)
+    ? "هتاخد " + fmtPoints(cashbackPointsPreview(amount, percent)) + " (≈ " + fmtUsd(Math.round((cashbackPointsPreview(amount, percent) / rate) * 100) / 100) + ") — بعد موافقة الأدمن."
+    : "";
+}
+
+async function loadCashback() {
+  if (!state.user) { showView("auth"); return; }
+  $("cashbackOffers").innerHTML = "<p class='muted'>جاري تحميل عروض الكاش باك…</p>";
+  try {
+    const offers = await api("list-cashback-offers");
+    state.cashbackOffers = offers || [];
+    renderCashbackOffers();
+    setMsg($("cashbackMsg"), "");
+  } catch (err) {
+    $("cashbackOffers").innerHTML = "";
+    setMsg($("cashbackMsg"), "مقدرناش نحمّل عروض الكاش باك دلوقتي — اتأكد من الاتصال وحاول تاني.", "error");
+  }
+  loadMyCashbackClaims();
+}
+
+function renderCashbackOffers() {
+  const list = $("cashbackOffers");
+  $("cashbackOffersEmpty").hidden = state.cashbackOffers.length > 0;
+  list.innerHTML = state.cashbackOffers.map((o) =>
+    '<article class="task-card">' +
+    '<div class="task-top"><h3>' + esc(o.store_name) + '</h3>' +
+    '<span class="cat-badge">كاش باك 💸</span></div>' +
+    '<div class="pay">💸 ' + esc(String(o.percent)) + "% كاش باك</div>" +
+    (o.description ? '<p class="task-desc">' + esc(o.description) + "</p>" : "") +
+    '<div class="form-row">' +
+    '<a class="btn btn-primary" href="' + esc(o.store_url) + '" target="_blank" rel="noopener">تسوّق الآن 🛒</a>' +
+    '<button class="btn btn-secondary" data-cb-claim="' + esc(o.id) + '">اطلب الكاش باك 📝</button>' +
+    "</div></article>"
+  ).join("");
+
+  // قائمة المتاجر في نموذج الطلب
+  const sel = $("cbOffer");
+  sel.innerHTML = state.cashbackOffers.map((o) =>
+    '<option value="' + esc(o.id) + '" data-percent="' + esc(o.percent) + '">' +
+    esc(o.store_name) + " — " + esc(String(o.percent)) + "% كاش باك</option>"
+  ).join("");
+  updateCbPreview();
+
+  list.querySelectorAll("[data-cb-claim]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sel.value = btn.dataset.cbClaim;
+      updateCbPreview();
+      $("cashbackClaimForm").scrollIntoView({ behavior: "smooth" });
+      $("cbAmount").focus();
+    });
+  });
+}
+
+$("cbOffer").addEventListener("change", updateCbPreview);
+$("cbAmount").addEventListener("input", updateCbPreview);
+
+$("cashbackClaimForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const amount = Number($("cbAmount").value);
+  const proof = $("cbProof").value.trim();
+  if (!amount || amount <= 0) return setMsg($("cbClaimMsg"), "اكتب قيمة مشترياتك بالدولار الأول.", "error");
+  if (!proof) return setMsg($("cbClaimMsg"), "الإثبات مطلوب — اكتب رقم الطلب أو لينك الإثبات.", "error");
+  const btn = e.target.querySelector("button[type=submit]");
+  btn.disabled = true;
+  setMsg($("cbClaimMsg"), "جاري إرسال طلب الكاش باك…");
+  try {
+    const res = await api("submit-cashback-claim", {
+      offer_id: Number($("cbOffer").value),
+      purchase_amount_usd: amount,
+      proof
+    });
+    setMsg($("cbClaimMsg"), "طلب الكاش باك اتبعت ✅ — " + fmtPoints(res.points_earned) + " هتنزل في محفظتك أول ما الأدمن يوافق (مشتريات " + fmtUsd(res.purchase_amount_usd) + " من " + esc(res.store_name || "") + ").", "ok");
+    e.target.reset();
+    updateCbPreview();
+    await loadMyCashbackClaims();
+    await loadProfile();
+  } catch (err) {
+    setMsg($("cbClaimMsg"), "مقدرناش نبعت الطلب: " + (err.message || "جرّب تاني."), "error");
+  } finally { btn.disabled = false; }
+});
+
+async function loadMyCashbackClaims() {
+  try {
+    const claims = await api("my-cashback-claims");
+    state.myCashbackClaims = claims || [];
+    renderMyCashbackClaims();
+  } catch { /* اختياري */ }
+}
+
+function renderMyCashbackClaims() {
+  const list = $("myCashbackClaims");
+  $("myCashbackClaimsEmpty").hidden = state.myCashbackClaims.length > 0;
+  list.innerHTML = state.myCashbackClaims.map((c) => {
+    const [label, cls] = TASK_STATUS[c.status] || ["", ""];
+    return '<div class="queue-item"><div class="meta"><strong>' + esc(c.store_name || "متجر") +
+      "</strong> • مشتريات: <strong>" + fmtUsd(c.purchase_amount_usd) + "</strong>" +
+      (c.percent !== null && c.percent !== undefined ? " • النسبة: " + esc(String(c.percent)) + "%" : "") +
+      ' • النقاط: <strong>' + fmtPoints(c.points_earned) + "</strong>" +
+      ' <span class="status ' + cls + '">' + label + "</span><br>" +
+      "الإثبات: " + esc(c.proof || "—") + " • " + fmtDate(c.created_at) +
+      (c.admin_note ? '<br><span class="admin-note">ملاحظة الأدمن: ' + esc(c.admin_note) + "</span>" : "") +
+      "</div></div>";
+  }).join("");
+}
+
 // ---------- الإحالة ----------
 async function loadReferral() {
   if (!state.user) { showView("auth"); return; }
@@ -617,6 +740,7 @@ async function loadAdmin() {
     $("statWdPending").textContent = s.pending_withdrawals ?? "—";
     $("statMining").textContent = s.active_mining ?? "—";
     $("statTasksPending").textContent = s.pending_tasks ?? "—";
+    $("statCashbackPending").textContent = s.pending_cashback ?? "—";
   } catch { /* الإحصائيات اختيارية */ }
 
   // طلبات السحب (كل الحالات — المعلقة أولاً)
@@ -655,6 +779,30 @@ async function loadAdmin() {
     renderAdminTasks();
   } catch { /* اختياري */ }
 
+  // مطالبات الكاش باك المعلقة
+  try {
+    const claims = await api("admin-cashback-claims");
+    state.adminCashbackClaims = claims || [];
+    const pending = state.adminCashbackClaims.filter((c) => c.status === "pending");
+    $("adminCashbackClaimsEmpty").hidden = pending.length > 0;
+    $("adminCashbackClaims").innerHTML = pending.map((c) =>
+      '<div class="queue-item"><div class="meta"><strong>' + esc(c.store_name || "متجر") +
+      "</strong> • مشتريات: <strong>" + fmtUsd(c.purchase_amount_usd) + "</strong>" +
+      (c.percent !== null && c.percent !== undefined ? " • النسبة: " + esc(String(c.percent)) + "%" : "") +
+      ' • النقاط المستحقة: <strong>' + fmtPoints(c.points_earned) + "</strong><br>" +
+      userLabel(c) + " • " + fmtDate(c.created_at) + "</div>" +
+      (c.proof ? '<div class="work">الإثبات: ' + esc(c.proof) + "</div>" : "") +
+      reviewBlock(c.id, "cashback", "قبول ودفع النقاط ✅", "رفض ❌", "سبب الرفض (بيظهر للمستخدم)") + "</div>"
+    ).join("");
+  } catch { /* اختياري */ }
+
+  // إدارة عروض الكاش باك (كل العروض — نشطة ومتوقفة)
+  try {
+    const offers = await api("admin-cashback-offers");
+    state.adminCashbackOffers = offers || [];
+    renderAdminCashbackOffers();
+  } catch { /* اختياري */ }
+
   // المستخدمون
   try {
     const users = await api("admin-users");
@@ -681,6 +829,7 @@ async function loadAdmin() {
     $("setDailyBonus").value = settings.daily_bonus_points ?? 50;
     $("setReferral").value = settings.referral_points ?? 100;
     $("setPointsPerUsd").value = settings.points_per_usd ?? 1000;
+    $("setCashbackPercent").value = settings.cashback_percent_default ?? 5;
   } catch { /* اختياري */ }
 
   bindAdminActions();
@@ -730,6 +879,100 @@ function renderAdminTasks() {
   });
 }
 
+function renderAdminCashbackOffers() {
+  $("adminCashbackOffersList").innerHTML = state.adminCashbackOffers.map((o) =>
+    '<article class="task-card' + (o.active === false ? " inactive" : "") + '">' +
+    '<div class="task-top"><h3>' + esc(o.store_name) + '</h3><span class="cat-badge">كاش باك 💸</span></div>' +
+    '<div class="pay">💸 ' + esc(String(o.percent)) + "% كاش باك" + (o.active === false ? ' <span class="status status-rejected">متوقف</span>' : "") + "</div>" +
+    (o.description ? '<p class="task-desc">' + esc(o.description) + "</p>" : "") +
+    '<p class="task-desc"><a href="' + esc(o.store_url) + '" target="_blank" rel="noopener" dir="ltr">' + esc(o.store_url) + "</a></p>" +
+    '<div class="form-row">' +
+    '<button class="btn btn-secondary btn-sm" data-edit-cb-offer="' + esc(o.id) + '">تعديل</button>' +
+    (o.active !== false
+      ? '<button class="btn btn-ghost btn-sm" data-toggle-cb-offer="' + esc(o.id) + '" data-active="false">إيقاف</button>'
+      : '<button class="btn btn-primary btn-sm" data-toggle-cb-offer="' + esc(o.id) + '" data-active="true">تفعيل</button>') +
+    '<button class="btn btn-danger btn-sm" data-delete-cb-offer="' + esc(o.id) + '">حذف</button>' +
+    "</div></article>"
+  ).join("");
+
+  $("adminCashbackOffersList").querySelectorAll("[data-edit-cb-offer]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const o = state.adminCashbackOffers.find((x) => String(x.id) === String(btn.dataset.editCbOffer));
+      if (!o) return;
+      $("cbOfferEditId").value = o.id;
+      $("cbStoreName").value = o.store_name || "";
+      $("cbPercent").value = o.percent ?? "";
+      $("cbStoreUrl").value = o.store_url || "";
+      $("cbOfferDesc").value = o.description || "";
+      $("cbOfferSaveBtn").textContent = "احفظ التعديل";
+      $("cbOfferCancelEdit").hidden = false;
+      $("cbOfferForm").scrollIntoView({ behavior: "smooth" });
+    });
+  });
+  $("adminCashbackOffersList").querySelectorAll("[data-toggle-cb-offer]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await api("admin-cashback-offer", { id: btn.dataset.toggleCbOffer, active: btn.dataset.active === "true" });
+        toast(btn.dataset.active === "true" ? "العرض اتفعّل ✅" : "العرض اتوقف ⏸️");
+        await loadAdmin();
+      } catch (err) {
+        toast("مقدرناش نغيّر حالة العرض: " + (err.message || ""));
+        btn.disabled = false;
+      }
+    });
+  });
+  $("adminCashbackOffersList").querySelectorAll("[data-delete-cb-offer]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("متأكد إنك عايز تحذف العرض ده؟ (مينفعش حذفه لو عليه مطالبات)")) return;
+      btn.disabled = true;
+      try {
+        await api("admin-cashback-offer", { action2: "delete", id: btn.dataset.deleteCbOffer });
+        toast("العرض اتحذف ✅");
+        await loadAdmin();
+      } catch (err) {
+        toast("مقدرناش نحذف العرض: " + (err.message || ""));
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+$("cbOfferForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("cbOfferSaveBtn");
+  btn.disabled = true;
+  setMsg($("cbOfferMsg"), "جاري الحفظ…");
+  const payload = {
+    store_name: $("cbStoreName").value.trim(),
+    percent: Number($("cbPercent").value),
+    store_url: $("cbStoreUrl").value.trim(),
+    description: $("cbOfferDesc").value.trim() || null,
+    active: true
+  };
+  const editId = $("cbOfferEditId").value;
+  if (editId) payload.id = editId;
+  try {
+    await api("admin-cashback-offer", payload);
+    setMsg($("cbOfferMsg"), editId ? "العرض اتعدّل ✅" : "العرض اتضاف ✅", "ok");
+    e.target.reset();
+    $("cbOfferEditId").value = "";
+    $("cbOfferSaveBtn").textContent = "أضف العرض";
+    $("cbOfferCancelEdit").hidden = true;
+    await loadAdmin();
+  } catch (err) {
+    setMsg($("cbOfferMsg"), "مقدرناش نحفظ العرض: " + (err.message || ""), "error");
+  } finally { btn.disabled = false; }
+});
+
+$("cbOfferCancelEdit").addEventListener("click", () => {
+  $("cbOfferForm").reset();
+  $("cbOfferEditId").value = "";
+  $("cbOfferSaveBtn").textContent = "أضف العرض";
+  $("cbOfferCancelEdit").hidden = true;
+  setMsg($("cbOfferMsg"), "");
+});
+
 function bindAdminActions() {
   // أزرار المراجعة (سحب / تسليم مهمة)
   document.querySelectorAll("[data-review]").forEach((btn) => {
@@ -746,6 +989,9 @@ function bindAdminActions() {
         if (action === "withdrawal") {
           await api("admin-approve-withdrawal", { id, decision, note });
           toast(decision === "paid" ? "اتعلّم إنها اتدفعت ✅" : "طلب السحب اترفض والنقاط رجعت للمستخدم.");
+        } else if (action === "cashback") {
+          await api("admin-review-cashback-claim", { id, decision, note });
+          toast(decision === "approved" ? "اتقبل واتدفعت النقاط ✅" : "مطالبة الكاش باك اترفضت.");
         } else {
           await api("admin-review-task", { id, decision, note });
           toast(decision === "approved" ? "اتقبل واتدفعت النقاط ✅" : "التسليم اترفض.");
@@ -831,7 +1077,8 @@ $("settingsForm").addEventListener("submit", async (e) => {
         mining_duration_minutes: $("setMiningDuration").value,
         daily_bonus_points: $("setDailyBonus").value,
         referral_points: $("setReferral").value,
-        points_per_usd: $("setPointsPerUsd").value
+        points_per_usd: $("setPointsPerUsd").value,
+        cashback_percent_default: $("setCashbackPercent").value
       }
     });
     setMsg($("settingsMsg"), "الإعدادات اتحفظت ✅", "ok");
