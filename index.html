@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سجّل واكسب — عدّن واجمع النقاط واقبض</title>
+<meta name="description" content="منصة سجّل واكسب: سجّل مجاناً، عدّن كل ساعة، اجمع النقاط، نفّذ مهام بسيطة، ادعُ صحابك، واسحب فلوسك عبر فودافون كاش أو إنستا باي. 100 نقطة = 1 جنيه.">
+<link rel="stylesheet" href="styles.css">
+<script src="config.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="#" class="logo" data-nav="home">⛏️ سجّل واكسب</a>
+    <nav class="mainnav" id="mainNav">
+      <button class="nav-btn" data-nav="home">الرئيسية</button>
+      <button class="nav-btn auth-only" data-nav="mining">التعدين ⛏️</button>
+      <button class="nav-btn auth-only" data-nav="tasks">المهام</button>
+      <button class="nav-btn auth-only" data-nav="referral">ادعُ صحابك</button>
+      <button class="nav-btn auth-only" data-nav="wallet">محفظتي</button>
+      <button class="nav-btn auth-only admin-only" data-nav="admin">لوحة التحكم</button>
+    </nav>
+    <div class="topbar-actions">
+      <span class="user-chip auth-only" id="userChip"></span>
+      <button class="btn btn-ghost auth-only" id="logoutBtn">تسجيل الخروج</button>
+      <button class="btn btn-primary guest-only" data-nav="auth">دخول / حساب جديد</button>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============ الرئيسية ============ -->
+  <section class="view" id="view-home">
+    <div class="hero">
+      <h1>سجّل… <span class="accent">واكسب</span> ⛏️</h1>
+      <p class="hero-sub">سجّل مجاناً، دوس "عدّن" وسيب التعدين يشتغل ساعة، ارجع دوس "اجمع" والنقاط تنزل في محفظتك — وكل <strong>100 نقطة = 1 جنيه</strong> تسحبهم على فودافون كاش أو إنستا باي.</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary btn-lg guest-only" data-nav="auth">سجّل مجاناً وابدأ التعدين</button>
+        <button class="btn btn-secondary btn-lg auth-only" data-nav="mining">ابدأ التعدين دلوقتي ⛏️</button>
+      </div>
+      <div class="hero-points">
+        <div class="point"><span class="point-icon">⛏️</span><strong>تعدين كل ساعة</strong><span>جلسة تعدين 60 دقيقة = 100 نقطة = 1 جنيه</span></div>
+        <div class="point"><span class="point-icon">🎁</span><strong>مكافأة يومية</strong><span>ادخل كل يوم وخد 50 نقطة هدية</span></div>
+        <div class="point"><span class="point-icon">👍</span><strong>مهام بسيطة</strong><span>لايك ومتابعة ومشاركة — من 10 لـ 50 نقطة للمهمة</span></div>
+        <div class="point"><span class="point-icon">👥</span><strong>ادعُ صحابك</strong><span>100 نقطة عن كل صاحب يسجّل بكودك</span></div>
+      </div>
+    </div>
+
+    <!-- مساحة إعلانات AdSense — يتحط الكود بعد موافقة جوجل -->
+    <!-- Google AdSense: ضع كود الوحدة الإعلانية داخل div#adsense-slot بعد موافقة جوجل على الحساب. لا تضع أي كود إعلاني قبل الموافقة. -->
+    <div class="ads-slot" id="adsense-slot">مساحة إعلانات AdSense — يتحط الكود بعد موافقة جوجل</div>
+
+    <div class="how">
+      <h2>إزاي تكسب معانا؟</h2>
+      <ol class="steps">
+        <li><strong>1 — سجّل حساب مجاناً</strong><span>باسمك وإيميلك وكلمة سر، وجهاز واحد ليه حساب واحد بس.</span></li>
+        <li><strong>2 — دوس "عدّن"</strong><span>جلسة تعدين لمدة ساعة واحدة، والنقاط بتتحسب لوحدها.</span></li>
+        <li><strong>3 — دوس "اجمع"</strong><span>لما الساعة تخلص، اجمع الـ 100 نقطة في محفظتك وابدأ جلسة جديدة.</span></li>
+        <li><strong>4 — اسحب فلوسك</strong><span>من أول 100 نقطة (= 1 جنيه) اطلب سحب على فودافون كاش أو إنستا باي.</span></li>
+      </ol>
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat"><strong>100 نقطة</strong><span>= 1 جنيه</span></div>
+      <div class="stat"><strong>60 دقيقة</strong><span>مدة جلسة التعدين</span></div>
+      <div class="stat"><strong>50 نقطة</strong><span>المكافأة اليومية</span></div>
+      <div class="stat"><strong>100 نقطة</strong><span>مكافأة كل إحالة</span></div>
+    </div>
+
+    <div class="note-box">
+      <strong>ملحوظة مهمة عن الحسابات:</strong>
+      كل جهاز ليه حساب واحد بس على المنصة. لو مسحت بيانات المتصفح أو غيّرت المتصفح أو الجهاز ممكن تقدر تسجّل تاني — ده حد "أفضل جهد" مش مضمون 100%.
+      والسحب يدوي: الأدمن بيحوّل لك بنفسه على رقمك ويعلّم الطلب "اتدفع" في لوحة التحكم.
+    </div>
+  </section>
+
+  <!-- ============ تسجيل الدخول / حساب جديد ============ -->
+  <section class="view" id="view-auth" hidden>
+    <div class="auth-card">
+      <h2>أهلاً بيك في سجّل واكسب 👋</h2>
+      <p class="muted">سجّل حساب جديد مجاناً وابدأ التعدين، أو ادخل بحسابك لو عندك واحد.</p>
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" type="button">تسجيل الدخول</button>
+        <button class="tab" id="tabRegister" type="button">حساب جديد</button>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <label>الإيميل
+          <input type="email" id="loginEmail" required placeholder="example@mail.com" dir="ltr">
+        </label>
+        <label>كلمة السر
+          <input type="password" id="loginPassword" required placeholder="كلمة السر" autocomplete="current-password">
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">دخول</button>
+      </form>
+
+      <form id="registerForm" class="auth-form" hidden>
+        <label>الاسم
+          <input type="text" id="regName" required placeholder="اسمك الكامل" minlength="2">
+        </label>
+        <label>الإيميل
+          <input type="email" id="regEmail" required placeholder="example@mail.com" dir="ltr">
+        </label>
+        <label>كلمة السر
+          <input type="password" id="regPassword" required placeholder="6 حروف أو أرقام على الأقل" minlength="6" autocomplete="new-password">
+        </label>
+        <label>كود الإحالة (اختياري — لو صاحبك دعاك)
+          <input type="text" id="regReferral" placeholder="مثال: SW7K2Q9X" dir="ltr">
+        </label>
+        <p class="muted small">📌 أول حساب بيتسجّل على المنصة بيبقى حساب الأدمن (صاحب المنصة) تلقائيًا. وكل جهاز ليه حساب واحد بس.</p>
+        <button class="btn btn-primary btn-block" type="submit">اعمل حساب وابدأ التعدين</button>
+      </form>
+
+      <p class="form-msg" id="authMsg" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- ============ التعدين ============ -->
+  <section class="view" id="view-mining" hidden>
+    <h2>التعدين ⛏️</h2>
+    <p class="muted">جلسة تعدين واحدة = <strong>60 دقيقة = 100 نقطة = 1 جنيه</strong>. دوس "عدّن"، ولما الوقت يخلص دوس "اجمع" وابدأ جلسة جديدة.</p>
+
+    <div class="mining-card" id="miningCard">
+      <div id="miningIdle">
+        <p class="points-line">⛏️ مفيش جلسة تعدين شغالة دلوقتي</p>
+        <p class="muted">دوس الزرار وهتبدأ جلسة 60 دقيقة — النقاط (100 نقطة) هتنزل لما تجمعها.</p>
+        <button class="btn btn-primary btn-lg" id="startMiningBtn" type="button">عدّن ⛏️</button>
+      </div>
+      <div id="miningActive" hidden>
+        <p class="points-line">⏳ التعدين شغال… هيخلص بعد</p>
+        <div class="countdown" id="countdown">60:00</div>
+        <p class="muted">لما الوقت يخلص هتقدر تجمع <strong>100 نقطة</strong></p>
+        <button class="btn btn-primary btn-lg" id="collectMiningBtn" type="button" disabled>اجمع النقاط 💰</button>
+      </div>
+      <p class="form-msg" id="miningMsg" role="alert"></p>
+    </div>
+
+    <div class="bonus-card">
+      <div>
+        <h3>🎁 المكافأة اليومية</h3>
+        <p class="muted small">ادخل كل يوم وخد <strong>50 نقطة</strong> هدية — مرة واحدة في اليوم.</p>
+      </div>
+      <button class="btn btn-secondary" id="dailyBonusBtn" type="button">خد مكافأة النهاردة 🎁</button>
+    </div>
+    <p class="form-msg" id="bonusMsg" role="alert"></p>
+  </section>
+
+  <!-- ============ المهام ============ -->
+  <section class="view" id="view-tasks" hidden>
+    <h2>المهام البسيطة 👍</h2>
+    <p class="muted">لايك ومتابعة ومشاركة — نفّذ المهمة وسلّم إثبات التنفيذ، والنقاط تنزل في محفظتك بعد موافقة الأدمن.</p>
+    <div class="filters" id="typeFilters"></div>
+    <p class="muted" id="tasksCount"></p>
+    <div id="tasksList" class="tasks-grid"></div>
+    <p class="empty" id="tasksEmpty" hidden>مفيش مهام في النوع ده دلوقتي — جرّب نوع تاني.</p>
+    <p class="form-msg" id="tasksMsg" role="alert"></p>
+  </section>
+
+  <!-- ============ الإحالة ============ -->
+  <section class="view" id="view-referral" hidden>
+    <h2>ادعُ صحابك 👥</h2>
+    <p class="muted">شارك كودك مع صحابك — كل صاحب يسجّل بكودك تاخد <strong>100 نقطة</strong>.</p>
+    <div class="ref-box">
+      <p class="muted">كود الإحالة بتاعك</p>
+      <div class="ref-code" id="refCode">—</div>
+      <p class="muted small">ابعت اللينك ده لصحابك:</p>
+      <div class="ref-link" id="refLink">—</div>
+      <button class="btn btn-primary" id="copyRefBtn" type="button">نسخ رابط الدعوة 📋</button>
+      <p class="form-msg" id="refMsg" role="alert"></p>
+    </div>
+    <div class="stats-strip">
+      <div class="stat"><strong id="refCount">—</strong><span>صاحب سجّل بكودك</span></div>
+      <div class="stat"><strong id="refPoints">—</strong><span>نقطة كسبتها من الإحالات</span></div>
+      <div class="stat"><strong>100 نقطة</strong><span>عن كل صاحب جديد</span></div>
+    </div>
+  </section>
+
+  <!-- ============ المحفظة ============ -->
+  <section class="view" id="view-wallet" hidden>
+    <h2>محفظتي 💰</h2>
+    <p class="muted">سعر التحويل: <strong>100 نقطة = 1 جنيه</strong> — الحد الأدنى للسحب <strong>100 نقطة</strong>.</p>
+    <div class="wallet-cards">
+      <div class="wallet-card balance">
+        <span>رصيدك من النقاط</span>
+        <strong id="walletPoints">—</strong>
+        <span class="muted small" id="walletEgp">—</span>
+      </div>
+      <div class="wallet-card held">
+        <span>نقاط محجوزة (سحب قيد التنفيذ)</span>
+        <strong id="walletHeld">—</strong>
+        <span class="muted small" id="walletHeldEgp">—</span>
+      </div>
+      <div class="wallet-card">
+        <span>إجمالي النقاط اللي كسبتها</span>
+        <strong id="walletTotal">—</strong>
+      </div>
+    </div>
+
+    <div class="wallet-grid">
+      <div class="card">
+        <h3>سحب النقاط ➖</h3>
+        <p class="muted small">أقل مبلغ للسحب <strong>100 نقطة (= 1 جنيه)</strong>. النقاط بتتحجز من رصيدك لحد ما الأدمن يحوّل لك ويعلّم "اتدفع".</p>
+        <form id="withdrawForm">
+          <label>عدد النقاط
+            <input type="number" id="wdPoints" min="100" step="1" required placeholder="مثال: 500 (= 5 جنيه)">
+          </label>
+          <label>طريقة الاستلام
+            <select id="wdMethod">
+              <option value="vodafone_cash">فودافون كاش</option>
+              <option value="instapay">إنستا باي</option>
+            </select>
+          </label>
+          <label>الرقم اللي هيتحول عليه
+            <input type="text" id="wdNumber" required placeholder="مثال: 010xxxxxxxx" dir="ltr">
+          </label>
+          <p class="muted small" id="wdPreview"></p>
+          <button class="btn btn-primary btn-block" type="submit">ابعت طلب السحب</button>
+        </form>
+        <p class="form-msg" id="wdMsg" role="alert"></p>
+      </div>
+
+      <div class="card">
+        <h3>سعر التحويل 💱</h3>
+        <p><strong>100 نقطة = 1 جنيه</strong></p>
+        <p class="muted small">جلسة تعدين (60 دقيقة) = 100 نقطة = 1 جنيه.<br>المكافأة اليومية = 50 نقطة = 0.5 جنيه.<br>الإحالة = 100 نقطة = 1 جنيه عن كل صاحب.</p>
+        <p class="muted small">السحب يدوي: الأدمن بيحوّل لك بنفسه على رقمك.</p>
+      </div>
+    </div>
+
+    <h3 class="section-title">سجل الحركات 📒</h3>
+    <div id="ledger" class="ledger"></div>
+    <p class="empty" id="ledgerEmpty" hidden>لسه مفيش حركات في محفظتك.</p>
+    <p class="form-msg" id="walletMsg" role="alert"></p>
+  </section>
+
+  <!-- ============ لوحة التحكم (أدمن) ============ -->
+  <section class="view" id="view-admin" hidden>
+    <h2>لوحة التحكم 🛠️</h2>
+    <p class="muted">دي لوحة صاحب المنصة — بتراجع طلبات السحب والتسليمات وتدير المهام والمستخدمين والإعدادات.</p>
+
+    <div class="admin-stats" id="adminStats">
+      <div class="stat"><strong id="statUsers">—</strong><span>مستخدم</span></div>
+      <div class="stat"><strong id="statTotalPoints">—</strong><span>نقطة موزعة</span></div>
+      <div class="stat"><strong id="statWdPending">—</strong><span>سحب قيد المراجعة</span></div>
+      <div class="stat"><strong id="statMining">—</strong><span>تعدين نشط دلوقتي</span></div>
+      <div class="stat"><strong id="statTasksPending">—</strong><span>تسليم قيد المراجعة</span></div>
+    </div>
+
+    <h3 class="section-title">طلبات السحب ⏳</h3>
+    <div id="adminWithdrawals" class="queue"></div>
+    <p class="empty" id="adminWithdrawalsEmpty" hidden>مفيش طلبات سحب قيد المراجعة.</p>
+
+    <h3 class="section-title">تسليمات المهام ⏳</h3>
+    <div id="adminCompletions" class="queue"></div>
+    <p class="empty" id="adminCompletionsEmpty" hidden>مفيش تسليمات قيد المراجعة.</p>
+
+    <h3 class="section-title">إدارة المهام 👍</h3>
+    <div class="card">
+      <form id="taskForm">
+        <input type="hidden" id="taskEditId">
+        <label>نوع المهمة
+          <select id="taskType">
+            <option value="like">لايك 👍</option>
+            <option value="follow">متابعة ➕</option>
+            <option value="share">مشاركة 🔁</option>
+          </select>
+        </label>
+        <label>عنوان المهمة
+          <input type="text" id="taskTitle" required placeholder="مثال: لايك لصفحة فيسبوك">
+        </label>
+        <label>الوصف
+          <textarea id="taskDesc" rows="2" required placeholder="وصف مختصر للمهمة"></textarea>
+        </label>
+        <label>النقاط
+          <input type="number" id="taskPoints" min="1" step="1" required placeholder="مثال: 20">
+        </label>
+        <label>الرابط (اختياري)
+          <input type="text" id="taskUrl" placeholder="https://…" dir="ltr">
+        </label>
+        <div class="form-row">
+          <button class="btn btn-primary" type="submit" id="taskSaveBtn">أضف المهمة</button>
+          <button class="btn btn-ghost" type="button" id="taskCancelEdit" hidden>إلغاء التعديل</button>
+        </div>
+      </form>
+      <p class="form-msg" id="taskMsg" role="alert"></p>
+    </div>
+    <div id="adminTasksList" class="tasks-grid"></div>
+
+    <h3 class="section-title">المستخدمون 👥</h3>
+    <div id="adminUsersList" class="users-list"></div>
+    <p class="empty" id="adminUsersEmpty" hidden>مفيش مستخدمين لسه.</p>
+
+    <h3 class="section-title">إعدادات المنصة ⚙️</h3>
+    <div class="card">
+      <form id="settingsForm">
+        <label>رقم فودافون كاش (للسحب — بيتعرض للأدمن)
+          <input type="text" id="setVodafone" placeholder="مثال: 010xxxxxxxx" dir="ltr">
+        </label>
+        <label>رقم / حساب إنستا باي
+          <input type="text" id="setInstapay" placeholder="مثال: 010xxxxxxxx أو اسم الحساب" dir="ltr">
+        </label>
+        <label>نقاط التعدين في الساعة
+          <input type="number" id="setMiningPerHour" min="1" step="1" placeholder="100">
+        </label>
+        <label>مدة جلسة التعدين (دقيقة)
+          <input type="number" id="setMiningDuration" min="1" step="1" placeholder="60">
+        </label>
+        <label>نقاط المكافأة اليومية
+          <input type="number" id="setDailyBonus" min="0" step="1" placeholder="50">
+        </label>
+        <label>نقاط مكافأة الإحالة
+          <input type="number" id="setReferral" min="0" step="1" placeholder="100">
+        </label>
+        <label>عدد النقاط = 1 جنيه (سعر التحويل)
+          <input type="number" id="setPointsPerEgp" min="1" step="1" placeholder="100">
+        </label>
+        <button class="btn btn-primary" type="submit">احفظ الإعدادات</button>
+      </form>
+      <p class="form-msg" id="settingsMsg" role="alert"></p>
+    </div>
+    <p class="form-msg" id="adminMsg" role="alert"></p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>⛏️ سجّل واكسب — سجّل وعدّن واجمع النقاط واقبض. 100 نقطة = 1 جنيه، والسحب من 100 نقطة عبر فودافون كاش أو إنستا باي.</p>
+  <p class="muted small">السحب يدوي: طلب جوه المنصة + تحويل حقيقي من الأدمن + تأكيد "اتدفع".</p>
+</footer>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
