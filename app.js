@@ -40,16 +40,16 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 }[c]));
 const fmtPoints = (n) => Number(n ?? 0).toLocaleString("en-US") + " نقطة";
-const fmtEgp = (n) => {
+const fmtUsd = (n) => {
   const v = Number(n ?? 0);
-  return (Number.isInteger(v) ? v.toLocaleString("en-US") : v.toFixed(2)) + " جنيه";
+  return "$" + (Number.isInteger(v) ? v.toLocaleString("en-US") : v.toFixed(2));
 };
 const fmtDate = (iso) => {
   if (!iso) return "";
   try { return new Date(iso).toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" }); }
   catch { return String(iso); }
 };
-const METHOD_LABEL = { vodafone_cash: "فودافون كاش", instapay: "إنستا باي" };
+const METHOD_LABEL = { binance: "Binance (USDT)" };
 const TASK_STATUS = {
   pending: ["في المراجعة", "status-pending"],
   approved: ["اتقبل ✅", "status-approved"],
@@ -530,9 +530,9 @@ async function loadWallet() {
     const w = await api("wallet");
     state.wallet = w;
     $("walletPoints").textContent = fmtPoints(w.points_balance);
-    $("walletEgp").textContent = "≈ " + fmtEgp(w.balance_egp);
+    $("walletUsd").textContent = "≈ " + fmtUsd(w.balance_usd);
     $("walletHeld").textContent = fmtPoints(w.points_held);
-    $("walletHeldEgp").textContent = "≈ " + fmtEgp(w.held_egp);
+    $("walletHeldUsd").textContent = "≈ " + fmtUsd(w.held_usd);
     $("walletTotal").textContent = fmtPoints(w.total_earned);
     await loadProfile();
 
@@ -554,16 +554,16 @@ async function loadWallet() {
 
 $("wdPoints").addEventListener("input", () => {
   const pts = Number($("wdPoints").value || 0);
-  const rate = (state.wallet && state.wallet.points_per_egp) || 100;
+  const rate = (state.wallet && state.wallet.points_per_usd) || 1000;
   $("wdPreview").textContent = pts > 0
-    ? pts + " نقطة ≈ " + fmtEgp(Math.round((pts / rate) * 100) / 100)
+    ? pts + " نقطة ≈ " + fmtUsd(Math.round((pts / rate) * 100) / 100)
     : "";
 });
 
 $("withdrawForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const points = Number($("wdPoints").value);
-  if (!points || points < 100) return setMsg($("wdMsg"), "أقل مبلغ للسحب 100 نقطة (= 1 جنيه).", "error");
+  if (!points || points < 1000) return setMsg($("wdMsg"), "أقل مبلغ للسحب 1000 نقطة (= 1 دولار).", "error");
   if (state.wallet && points > Number(state.wallet.points_balance || 0)) {
     return setMsg($("wdMsg"), "النقاط أكبر من رصيدك المتاح (" + fmtPoints(state.wallet.points_balance) + ").", "error");
   }
@@ -576,7 +576,7 @@ $("withdrawForm").addEventListener("submit", async (e) => {
       method: $("wdMethod").value,
       number: $("wdNumber").value.trim()
     });
-    setMsg($("wdMsg"), "طلب السحب اتبعت ✅ — " + fmtPoints(res.points) + " اتحجزت من رصيدك (≈ " + fmtEgp(res.amount_egp) + ")، والأدمن هيحوّل لك ويعلّم إنه اتدفع.", "ok");
+    setMsg($("wdMsg"), "طلب السحب اتبعت ✅ — " + fmtPoints(res.points) + " اتحجزت من رصيدك (≈ " + fmtUsd(res.amount_usd) + ")، والأدمن هيحوّل لك ويعلّم إنه اتدفع.", "ok");
     e.target.reset();
     $("wdPreview").textContent = "";
     await loadWallet();
@@ -625,7 +625,7 @@ async function loadAdmin() {
     const pending = (wds || []).filter((w) => w.status === "pending");
     $("adminWithdrawalsEmpty").hidden = pending.length > 0;
     $("adminWithdrawals").innerHTML = pending.map((w) =>
-      '<div class="queue-item"><div class="meta"><strong>' + fmtPoints(w.points) + " (≈ " + fmtEgp(w.amount_egp) + ")</strong> • " +
+      '<div class="queue-item"><div class="meta"><strong>' + fmtPoints(w.points) + " (≈ " + fmtUsd(w.amount_usd) + ")</strong> • " +
       esc(METHOD_LABEL[w.method] || w.method) + " • يتحوّل على: <strong dir='ltr'>" + esc(w.number || "—") + "</strong><br>" +
       userLabel(w) + " • " + fmtDate(w.created_at) + "</div>" +
       reviewBlock(w.id, "withdrawal", "اتدفع ✅", "رفض ❌") + "</div>"
@@ -676,13 +676,11 @@ async function loadAdmin() {
   // الإعدادات
   try {
     const settings = await api("admin-settings", { action2: "get" });
-    $("setVodafone").value = settings.vodafone_cash_number || "";
-    $("setInstapay").value = settings.instapay_number || "";
     $("setMiningPerHour").value = settings.mining_points_per_hour ?? 100;
     $("setMiningDuration").value = settings.mining_duration_minutes ?? 60;
     $("setDailyBonus").value = settings.daily_bonus_points ?? 50;
     $("setReferral").value = settings.referral_points ?? 100;
-    $("setPointsPerEgp").value = settings.points_per_egp ?? 100;
+    $("setPointsPerUsd").value = settings.points_per_usd ?? 1000;
   } catch { /* اختياري */ }
 
   bindAdminActions();
@@ -829,13 +827,11 @@ $("settingsForm").addEventListener("submit", async (e) => {
   try {
     await api("admin-settings", {
       settings: {
-        vodafone_cash_number: $("setVodafone").value.trim(),
-        instapay_number: $("setInstapay").value.trim(),
         mining_points_per_hour: $("setMiningPerHour").value,
         mining_duration_minutes: $("setMiningDuration").value,
         daily_bonus_points: $("setDailyBonus").value,
         referral_points: $("setReferral").value,
-        points_per_egp: $("setPointsPerEgp").value
+        points_per_usd: $("setPointsPerUsd").value
       }
     });
     setMsg($("settingsMsg"), "الإعدادات اتحفظت ✅", "ok");
